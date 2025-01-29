@@ -2,7 +2,9 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../userSchema/user.js';
-import dotenv from 'dotenv';
+import Doctor from "../userSchema/docterSchema.js"
+import dotenv, { populate } from 'dotenv';
+import Appointment from '../userSchema/appointmentSchema.js';
 dotenv.config();
 const routerUser = express.Router();
 
@@ -67,26 +69,193 @@ routerUser.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 });
-
-// Protected Route Example
-routerUser.get('/protected', verifyToken, (req, res) => {
+// Corrected Protected Route
+routerUser.get('/protected', (req, res) => {
     res.status(200).json({ message: `Welcome, ${req.user.name}!` });
 });
 
-// Token Verification Middleware
-function verifyToken(req, res, next) {
-    const token = req.headers['authorization'];
-    if (!token) {
-        return res.status(403).json({ message: 'No token provided.' });
-    }
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next();
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid token.' });
+
+
+
+routerUser.get("/get/doctors", async (req,res)=>{
+    try{
+           const result=await Doctor.find({});
+
+           res.status(201).json({Doctors:result});
+    }catch(err){
+
     }
-}
+           
+})
+
+
+
+routerUser.get("/get/doctor/details", async (req, res) => {
+    try {
+        const { id } = req.query; // Use query parameters for GET requests
+        console.log("Doctor ID:", id);
+        
+        if (!id) {
+            return res.status(400).json({ message: "Doctor ID is required." });
+        }
+
+        const doctor = await Doctor.findById(id);
+
+        if (!doctor) {
+            return res.status(404).json({ message: "Doctor not found." });
+        }
+
+        res.status(200).json({ doctor });
+    } catch (err) {
+        console.log("Error while fetching doctor details:", err.message);
+        res.status(500).json({ message: "Server error. Please try again later." });
+    }
+});
+
+
+routerUser.post("/post/appointment/book",async (req,res)=>{
+
+    try{
+
+          
+          //    const {user_id,doctorId,date,time}=req.body;
+          const saveData=new Appointment(req.body);
+        
+          saveData.save();
+
+          if(saveData){
+            return res.status(201).json({message :"Appointment Submitted!"})
+          }
+          
+    }catch(err){
+        console.log("error while saving data into appointments models",err.message)
+        res.json({msg:err.message});
+    }
+          
+
+
+
+})
+
+
+
+routerUser.get("/get/appointments/details", async (req, res) => {
+    try {
+        const { id } = req.query; // Use query parameters for GET requests
+
+        console.log("Doctor ID:", id);
+        
+        if (!id) {
+            return res.status(400).json({ message: "Doctor ID is required." });
+        }
+
+        // Querying based on doctor's ID, assuming doctor field stores the ObjectId
+        const appointments = await Appointment.find({ "doctor": id });
+
+        if (!appointments || appointments.length === 0) {
+            return res.status(404).json({ message: "Appointments not found." });
+        }
+
+        res.status(200).json({ appointments });
+    } catch (err) {
+        console.log("Error while fetching doctor details:", err.message);
+        res.status(500).json({ message: "Server error. Please try again later." });
+    }
+});
+
+
+
+routerUser.get("/get/user/appointments", async (req, res) => {
+    try {
+        const { id } = req.query; // Use query parameters for GET requests
+
+        console.log("User ID:", id);
+        
+        if (!id) {
+            return res.status(400).json({ message: "user ID is required." });
+        }
+
+        // Querying based on doctor's ID, assuming doctor field stores the ObjectId
+        const appointments = await Appointment.find({ "user_id": id }).populate("user_id").populate("doctor")
+
+        if (!appointments || appointments.length === 0) {
+            return res.status(404).json({ message: "Appointments not found." });
+        }
+
+        res.status(200).json({ appointments });
+    } catch (err) {
+        console.log("Error while fetching user appointments details:", err.message);
+        res.status(500).json({ message: "Server error. Please try again later." });
+    }
+});
+
+
+routerUser.delete("/delete/appointment/:id",async (req,res)=>{
+    try{
+        const {id}=req.params;
+        const response=await Appointment.findByIdAndDelete(id)
+
+        res.status(201).json({message:"appointments was successfully deleted "})
+    }catch(err){
+          console.log("error while deleting data from appointments",err.message)
+    }
+          
+})
+
+
+
+routerUser.get("/get/appointment/all",async(req,res)=>{
+           
+    try{
+        const response = await Appointment.find({})
+        .populate("user_id") // Ensure the field name is a string
+        .populate("doctor"); // Ensure the field name is a string
+    
+
+               if(!response){
+               return res.status(501).json({message:"appointments is not available"})
+               }
+
+
+               res.status(201).json({response});
+
+
+    }catch(err){
+        console.log("error while fetching appointments",err.message);
+    }
+})
+
+
+
+routerUser.put("/update/appointment/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ message: "Status is required." });
+        }
+
+        const updatedAppointment = await Appointment.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedAppointment) {
+            return res.status(404).json({ message: "Appointment not found." });
+        }
+
+        res.status(200).json({ message: "Appointment status updated successfully.", updatedAppointment });
+    } catch (err) {
+        console.log("Error while updating appointment status:", err.message);
+        res.status(500).json({ message: "Server error. Please try again later." });
+    }
+});
+
+
+
+
 
 export default routerUser;
