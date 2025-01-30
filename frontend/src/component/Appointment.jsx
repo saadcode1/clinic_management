@@ -1,7 +1,8 @@
 import axios from "../axios"
 import React, { useState, useEffect, useContext } from "react"
 import { useParams } from "react-router-dom"
-import { AuthContext } from "../context/AuthContext.jsx"
+import { AuthContext } from "../context/AuthContext.jsx";
+import { ToastContainer, toast } from "react-toastify"
 import "./Appointment.css"
 
 export default function Appointment() {
@@ -42,6 +43,8 @@ export default function Appointment() {
         time: selectedTime,
       })
       setMessage(res.data.message || "Appointment booked successfully!")
+      toast(res.data.message || "Appointment Booked Successfully Done!")
+     
     } catch (err) {
       setMessage("Failed to book appointment. Please try again.")
     }
@@ -146,6 +149,7 @@ export default function Appointment() {
           ))}
         </div>
       )}
+      <ToastContainer/>
     </div>
   )
 }

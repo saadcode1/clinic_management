@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import Register from './component/Register.jsx';
@@ -11,7 +11,6 @@ import Click from './component/Click.jsx';
 
 const App = () => {
     const [checkToken, setCheckToken] = React.useState('');
-
     React.useEffect(() => {
         const token = localStorage.getItem('token');
         setCheckToken(token);

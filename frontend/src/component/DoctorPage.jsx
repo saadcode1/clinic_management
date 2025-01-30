@@ -7,7 +7,7 @@ import "./Doctor.css"
 
 export default function DoctorPage() {
   const navigate = useNavigate()
-  const { user } = useContext(AuthContext)
+  const { user,logout } = useContext(AuthContext)
   const [doctorArr, setDoctorArr] = useState([])
   const [loading, setLoading] = useState(true)
   const [dataFetched, setDataFetched] = useState(false)
@@ -34,7 +34,7 @@ export default function DoctorPage() {
   }, []) //This was the line that needed to be updated.  The empty array [] was causing the issue.  It should have included fetchData as a dependency.  However, since fetchData doesn't change, it's not strictly necessary to include it.  Leaving it as [] is fine.
 
   if (!user) {
-    navigate("/login")
+    navigate("/")
     return null
   }
 
@@ -44,12 +44,17 @@ export default function DoctorPage() {
         <div className="container">
           <h1>HealthCare Clinic</h1>
           <nav>
-            <Link to={`/appointments/${user?.id}`} className="nav-link">
+            {
+              user.name === "staff1" ?  <Link to={`/protected`} className="nav-link">
+              Manage Appointments
+            </Link>:<Link to={`/appointments/${user?.id}`} className="nav-link">
               Your Appointments
             </Link>
-            <button className="logout-btn">Logout</button>
+            }
+           
+            <button className="logout-btn" onClick={()=>{logout()}}>Logout</button>
           </nav>
-        </div>
+        </div> 
       </header>
 
       <main className="main-content">
